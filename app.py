@@ -46,11 +46,15 @@ def analyze():
             enforce_detection=False
         )
 
+        # DeepFace response
         emotion = result[0]["dominant_emotion"]
+
+        confidence = result[0]["emotion"][emotion]
 
         return jsonify({
             "status": "success",
-            "emotion": emotion
+            "emotion": emotion,
+            "confidence": round(confidence, 2)
         })
 
     except Exception as e:
