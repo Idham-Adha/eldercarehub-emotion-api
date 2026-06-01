@@ -4,12 +4,21 @@ import os
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def home():
-    return "Emotion API Running"
+    return "Emotion API Running", 200
+
+
+@app.route("/health")
+def health():
+    return "OK", 200
+
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
+
+    temp_file = None
 
     try:
 
@@ -24,24 +33,20 @@ def analyze():
 
         image = request.files["image"]
 
-        temp = tempfile.NamedTemporaryFile(
+        temp_file = tempfile.NamedTemporaryFile(
             delete=False,
             suffix=".jpg"
         )
 
-        image.save(temp.name)
+        image.save(temp_file.name)
 
         result = DeepFace.analyze(
-            img_path=temp.name,
+            img_path=temp_file.name,
             actions=["emotion"],
             enforce_detection=False
         )
 
         emotion = result[0]["dominant_emotion"]
-
-        # Padam fail sementara
-        if os.path.exists(temp.name):
-            os.remove(temp.name)
 
         return jsonify({
             "status": "success",
@@ -55,9 +60,15 @@ def analyze():
             "message": str(e)
         }), 500
 
+    finally:
+
+        if temp_file and os.path.exists(temp_file.name):
+            os.remove(temp_file.name)
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+
+    port = int(os.environ.get("PORT", 8080))
 
     app.run(
         host="0.0.0.0",
